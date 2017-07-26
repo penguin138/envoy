@@ -97,6 +97,11 @@ void InstanceImpl::flushStats() {
   server_stats_.days_until_first_cert_expiring_.set(
       sslContextManager().daysUntilFirstCertExpires());
 
+
+  for (const auto& sink : stat_sinks_) {
+    sink->beginFlush();
+  }
+
   for (const Stats::CounterSharedPtr& counter : stats_store_.counters()) {
     uint64_t delta = counter->latch();
     if (counter->used()) {
@@ -112,6 +117,10 @@ void InstanceImpl::flushStats() {
         sink->flushGauge(gauge->name(), gauge->value());
       }
     }
+  }
+
+  for (const auto& sink : stat_sinks_) {
+    sink->endFlush();
   }
 
   stat_flush_timer_->enableTimer(config_->statsFlushInterval());

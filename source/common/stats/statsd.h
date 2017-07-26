@@ -44,8 +44,10 @@ public:
   UdpStatsdSink(ThreadLocal::Instance& tls, Network::Address::InstanceConstSharedPtr address);
 
   // Stats::Sink
+  void beginFlush() override {}
   void flushCounter(const std::string& name, uint64_t delta) override;
   void flushGauge(const std::string& name, uint64_t value) override;
+  void endFlush() override {}
   void onHistogramComplete(const std::string& name, uint64_t value) override {
     // For statsd histograms are just timers.
     onTimespanComplete(name, std::chrono::milliseconds(value));
@@ -70,12 +72,20 @@ public:
                 Stats::Scope& scope);
 
   // Stats::Sink
+  void beginFlush() override {
+    tls_.getTyped<TlsSink>(tls_slot_).beginFlush();
+  }
+
   void flushCounter(const std::string& name, uint64_t delta) override {
     tls_.getTyped<TlsSink>(tls_slot_).flushCounter(name, delta);
   }
 
   void flushGauge(const std::string& name, uint64_t value) override {
     tls_.getTyped<TlsSink>(tls_slot_).flushGauge(name, value);
+  }
+
+  void endFlush() override {
+    tls_.getTyped<TlsSink>(tls_slot_).endFlush();
   }
 
   void onHistogramComplete(const std::string& name, uint64_t value) override {
@@ -92,8 +102,10 @@ private:
     TlsSink(TcpStatsdSink& parent, Event::Dispatcher& dispatcher);
     ~TlsSink();
 
+    void beginFlush();
     void flushCounter(const std::string& name, uint64_t delta);
     void flushGauge(const std::string& name, uint64_t value);
+    void endFlush();
     void onTimespanComplete(const std::string& name, std::chrono::milliseconds ms);
     void write(const std::string& stat);
 
@@ -109,6 +121,7 @@ private:
     Event::Dispatcher& dispatcher_;
     Network::ClientConnectionPtr connection_;
     bool shutdown_{};
+    Buffer::OwnedImpl buffer_;
   };
 
   // Somewhat arbitrary 16MiB limit for buffered stats.

@@ -100,12 +100,19 @@ TcpStatsdSink::TlsSink::TlsSink(TcpStatsdSink& parent, Event::Dispatcher& dispat
 
 TcpStatsdSink::TlsSink::~TlsSink() { ASSERT(!connection_); }
 
+void TcpStatsdSink::TlsSink::beginFlush() {
+
+}
+
 void TcpStatsdSink::TlsSink::flushCounter(const std::string& name, uint64_t delta) {
-  write(fmt::format("envoy.{}:{}|c\n", name, delta));
+  //write(fmt::format("envoy.{}:{}|c\n", name, delta));
 }
 
 void TcpStatsdSink::TlsSink::flushGauge(const std::string& name, uint64_t value) {
-  write(fmt::format("envoy.{}:{}|g\n", name, value));
+  //write(fmt::format("envoy.{}:{}|g\n", name, value));
+}
+
+void TcpStatsdSink::TlsSink::endFlush() {
 }
 
 void TcpStatsdSink::TlsSink::onEvent(uint32_t events) {
